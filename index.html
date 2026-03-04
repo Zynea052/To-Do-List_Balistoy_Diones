@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To Do List</title>
+<style>
+:root {
+    --bg-gradient: linear-gradient(135deg, #ffecd2, #fcb69f); /* soft gradient */
+    --todo-bg: #fff8e7;
+    --progress-bg: #e0f7fa;
+    --done-bg: #d3f8d3;
+    --text-color: #1a1a1a;
+    --primary-color: #5b21b6;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-gradient);
+    margin: 0;
+    padding: 20px;
+    color: var(--text-color);
+    display: flex;
+    justify-content: center; /* center horizontally */
+}
+
+h1 {
+    width: 100%;
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.board {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.column {
+    width: 280px;
+    min-width: 280px;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    /* shrink to content */
+}
+
+.column-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* spacing between cards */
+}
+
+.task-card {
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.task-card.completed {
+    text-decoration: line-through;
+    color: #4a4a4a;
+    opacity: 0.8;
+}
+
+.task-title {
+    width: 75%;
+    word-wrap: break-word;
+}
+
+.card-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-left: 5px;
+    color: var(--primary-color);
+}
+
+.card-actions button:hover {
+    transform: scale(1.1);
+}
+
+/* Column backgrounds */
+#todo-list { background-color: var(--todo-bg); padding:5px; border-radius:8px; }
+#progress-list { background-color: var(--progress-bg); padding:5px; border-radius:8px; }
+#done-list { background-color: var(--done-bg); padding:5px; border-radius:8px; }
+
+/* Add Task Input */
+.add-container {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.add-input {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 6px;
+}
+
+.add-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+}
+
+.add-btn:hover {
+    background-color: #7e3af2;
+}
+</style>
+</head>
+<body>
+<div>
+<h1>To Do List Team Board 🌟</h1>
+
+<div class="board">
+
+    <!-- To Do Column -->
+    <div class="column">
+        <div class="column-header"><span>To Do</span></div>
+        <div id="todo-list" class="task-list"></div>
+        <div class="add-container">
+            <input type="text" id="new-task-todo" class="add-input" placeholder="New task...">
+            <button class="add-btn" onclick="addTask('todo')">Add Task</button>
+        </div>
+    </div>
+
+    <!-- In Progress Column -->
+    <div class="column">
+        <div class="column-header"><span>In Progress</span></div>
+        <div id="progress-list" class="task-list"></div>
+        <div class="add-container">
+            <input type="text" id="new-task-progress" class="add-input" placeholder="New task...">
+            <button class="add-btn" onclick="addTask('progress')">Add Task</button>
+        </div>
+    </div>
+
+    <!-- Done Column -->
+    <div class="column">
+        <div class="column-header"><span>Done</span></div>
+        <div id="done-list" class="task-list"></div>
+        <div class="add-container">
+            <input type="text" id="new-task-done" class="add-input" placeholder="New task...">
+            <button class="add-btn" onclick="addTask('done')">Add Task</button>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+const API_URL = "http://localhost:3000/tasks";
+
+window.onload = loadTasks;
+
+async function loadTasks() {
+    try {
+        const response = await fetch(API_URL);
+        const tasks = await response.json();
+
+        const todoList = document.getElementById("todo-list");
+        const progressList = document.getElementById("progress-list");
+        const doneList = document.getElementById("done-list");
+
+        todoList.innerHTML = "";
+        progressList.innerHTML = "";
+        doneList.innerHTML = "";
+
+        tasks.forEach(task => {
+            const card = document.createElement("div");
+            card.className = "task-card";
+            if(task.is_completed && task.status==="done") card.classList.add("completed");
+
+            card.innerHTML = `
+                <span class="task-title">${task.title}</span>
+                <div class="card-actions">
+                    <button onclick="toggleTask(${task.id})">
+                        ${task.status==='done' ? '↩️' : '✅'}
+                    </button>
+                    <button onclick="deleteTask(${task.id})">🗑️</button>
+                </div>
+            `;
+
+            if(task.status==='todo') todoList.appendChild(card);
+            else if(task.status==='progress') progressList.appendChild(card);
+            else doneList.appendChild(card);
+        });
+    } catch(err) {
+        console.error("Error loading tasks:", err);
+    }
+}
+
+async function addTask(column) {
+    let inputId = column==='todo' ? 'new-task-todo' :
+                  column==='progress' ? 'new-task-progress' : 'new-task-done';
+    const input = document.getElementById(inputId);
+    const title = input.value.trim();
+    if(!title) return;
+
+    await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({title, status: column, is_completed: column==='done'})
+    });
+
+    input.value="";
+    loadTasks();
+}
+
+async function toggleTask(id) {
+    await fetch(`${API_URL}/${id}`, {method: "PUT"});
+    loadTasks();
+}
+
+async function deleteTask(id) {
+    if(confirm("Delete this task?")){
+        await fetch(`${API_URL}/${id}`, {method: "DELETE"});
+        loadTasks();
+    }
+}
+</script>
+</body>
+</html>
