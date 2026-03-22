@@ -9,9 +9,9 @@ app.use(express.json());
 // Connect to MySQL
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'root',           // <-- your MySQL username
-  password: 'Zynea12345@@', //  
-  database: 'todo_db'
+  user: 'root',
+  password: 'Zynea12345@@',
+  database: 'todo_db'   // 
 });
 
 db.connect(err => {
